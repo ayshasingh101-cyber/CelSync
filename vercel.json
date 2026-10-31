@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "functions": {
+    "api/ai.js": { "maxDuration": 300 }
+  },
   "headers": [
     {
       "source": "/(.*)",
