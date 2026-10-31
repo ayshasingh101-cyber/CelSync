@@ -1268,7 +1268,7 @@ document.addEventListener('keydown',e=>{
 
 /* ================= Gmail (read-only, runs in your browser; data stays in this browser) ================= */
 const GMAIL_SCOPE='https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send';
-const DEFAULT_GOOGLE_CLIENT_ID='';
+const DEFAULT_GOOGLE_CLIENT_ID='239080583530-juqs8qfe2i1jdk1v8pheo7fktm2pptuj.apps.googleusercontent.com';
 const GM={token:null,exp:0,busy:false};
 const clientId=()=>(S.gmail.clientId||DEFAULT_GOOGLE_CLIENT_ID||'').trim();
 function loadGis(){return new Promise((res,rej)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return res();const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;sc.onload=()=>res();sc.onerror=()=>rej(new Error('Google sign-in could not load. Check your internet connection and try again.'));document.head.appendChild(sc)})}
@@ -1816,7 +1816,7 @@ const GSTEPS=[
  ['scopes','Allow reading and sending mail','Data access → Add or remove scopes → tick gmail.modify and gmail.send (search "gmail") → Update → Save.','https://console.cloud.google.com/auth/scopes','Open Data access'],
  ['client','Create the Client ID','Clients → Create client → Web application. Under Authorised JavaScript origins add the address shown below. Create, then copy the Client ID.','https://console.cloud.google.com/auth/clients/create','Open Clients'],
  ['connect','Paste the Client ID and connect','Paste it below, press Connect Gmail, pick your account and allow access. Google may say the app is unverified: choose Continue (it is your own app).','','']];
-gmailPanel=function(){const o=location.origin.startsWith('http')?location.origin:'https://celsync.vercel.app';S.gmail.steps=S.gmail.steps||{};const done=k=>!!S.gmail.steps[k]||(k==='connect'&&S.gmail.connected);
+gmailPanel=function(){const o=location.origin.startsWith('http')?location.origin:'https://celsync.vercel.app';S.gmail.steps=S.gmail.steps||{};const done=k=>!!S.gmail.steps[k]||(k==='connect'?S.gmail.connected:!!DEFAULT_GOOGLE_CLIENT_ID);
  const next=GSTEPS.findIndex(s=>!done(s[0]));
  return `<div class="note" style="margin-bottom:16px">${S.gmail.connected?`Connected to <b>${esc(S.gmail.email)}</b>. Last synced ${S.gmail.lastSync?new Date(S.gmail.lastSync).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'never'}.`:`Gmail setup: step ${next<0?GSTEPS.length:next+1} of ${GSTEPS.length}. Tick each step when it's done.`} ${MAIL_SCOPE_NOTE}</div>
  <div class="gsteps">${GSTEPS.map(([k,t,d,u,l],i)=>`<div class="gs ${done(k)?'done':''} ${i===next?'cur':''}"><button class="gck" data-act="gStep" data-k="${k}" aria-label="Mark step ${i+1} ${done(k)?'not done':'done'}" ${k==='connect'?'disabled':''}>${done(k)?ic('check'):i+1}</button><div class="t"><b>${t}</b><span>${d}</span>
