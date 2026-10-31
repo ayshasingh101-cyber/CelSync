@@ -454,6 +454,14 @@ tr.click:hover td{background:var(--hover)}
 .rbox{margin-top:16px;display:flex;flex-direction:column;gap:8px}.rbox textarea{min-height:140px}
 .mobonly{display:none}
 @media (max-width:900px){.inbox{grid-template-columns:1fr}.inl{position:static}.inbox.reading .inl{display:none}.inbox:not(.reading) .inr{display:none}.mobonly{display:inline-grid}.paper{padding:22px 18px;border-radius:14px}.vbar h2{flex-basis:100%;order:-1;margin:6px 0}}
+.gs a.btn{text-decoration:none;white-space:nowrap}.gsteps{display:flex;flex-direction:column;gap:10px}
+.gs{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
+.gs .t{flex:1;min-width:0}.gs .t b{display:block;font-weight:600;margin-bottom:3px}.gs .t>span{font-size:13px;color:var(--muted);line-height:1.5}
+.gs.cur{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}.gs.done{opacity:.72}
+.gck{width:30px;height:30px;border-radius:50%;flex:none;border:1.5px solid var(--line-2);background:#fff;font:600 13px var(--font,inherit);color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.gs.done .gck{background:var(--ok);border-color:var(--ok);color:#fff}.gck svg{width:16px;height:16px}.gck:disabled{cursor:default}
+.orig{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.orig code{background:var(--sunken);padding:4px 8px;border-radius:8px;font-size:12.5px}
+@media (max-width:620px){.gs{flex-wrap:wrap}.gs>a.btn{margin-left:44px}}
 
 .banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:18px;border-radius:18px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);font-size:13.5px}
 .banner svg{color:var(--accent-text)}
@@ -775,8 +783,8 @@ function stepLabel(a){const d=dueInfo(a);if(d&&d.due)return T()[d.tpl].name+' du
 function wonBy(id){const m=member(id),w=S.accounts.filter(a=>a.stage==='won'&&a.owner===id);return{won:(m.base||0)+w.reduce((t,a)=>t+a.value,0),deals:(m.baseDeals||0)+w.length,target:m.target||100000}}
 
 /* ================= shell ================= */
-const NAV=[['overview','Dashboard'],['prospects','Prospects'],['pipeline','Pipeline'],['outreach','Outreach'],['schedule','Schedule'],['insights','Insights']];
-const RAIL=[['search','Search','search'],['plus','Create','create'],['star','Hot accounts','hot'],['cal','Today','today'],['mobile','Log a call','call'],['send','New email','email'],'-',['gear','Settings','settingsGo'],['sun','Theme','theme']];
+const NAV=[['overview','Dashboard'],['prospects','Prospects'],['pipeline','Pipeline'],['outreach','Outreach'],['schedule','Schedule']];
+const RAIL=[['search','Search','search'],['plus','Create','create'],['mobile','Log a call','call'],['send','New email','email'],'-',['gear','Settings','settingsGo']];
 document.getElementById('tInbox').innerHTML=ic('inbox');
 document.getElementById('rail').innerHTML=RAIL.map(r=>r==='-'?'<hr>':`<button data-act="${r[2]}" aria-label="${r[1]}">${ic(r[0])}<span class="tip">${r[1]}</span></button>`).join('');
 function chrome(v){
@@ -813,7 +821,7 @@ function lineChart(el,labels,series,target,maxY){
  let g='';
  [0,maxY/2,maxY].forEach(t=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line-2)" stroke-dasharray="3 6"/><text x="${L-8}" y="${y(t)+4}" text-anchor="end">${Math.round(t)}</text>`});
  labels.forEach((l,i)=>g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${l}</text>`);
- g+=`<line x1="${L}" x2="${W-R}" y1="${y(target)}" y2="${y(target)}" stroke="var(--ink)" stroke-width="1.6" stroke-dasharray="7 7" opacity=".5"/>`;
+ if(target!=null)g+=`<line x1="${L}" x2="${W-R}" y1="${y(target)}" y2="${y(target)}" stroke="var(--ink)" stroke-width="1.6" stroke-dasharray="7 7" opacity=".5"/>`;
  series.forEach((s,si)=>{const pts=s.data.map((v,i)=>[x(i),y(v)]),path=smooth(pts);
   if(s.fill)g+=`<defs><linearGradient id="gf${si}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.color}" stop-opacity=".30"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/></linearGradient></defs><path d="${path} L${x(s.data.length-1)},${y(0)} L${x(0)},${y(0)} Z" fill="url(#gf${si})"/>`;
   g+=`<path class="draw" d="${path}" fill="none" stroke="${s.color}" stroke-width="2.8" stroke-linecap="round"/>`;
@@ -837,22 +845,22 @@ V.overview=()=>{
  const act=active(),mk=curMonth(),tgt=teamTarget(),reached=contactedTeam(),pct=tgt?Math.round(reached/tgt*100):0;
  const hot=act.filter(a=>a.star).sort((a,b)=>STAGES.findIndex(s=>s.id===b.stage)-STAGES.findIndex(s=>s.id===a.stage)||b.fit-a.fit).slice(0,4);
  const cnt=STAGES.map(s=>({...s,n:act.filter(a=>a.stage===s.id).length}));
- const n=UI.chart==='6M'?6:12,sent=chartSent(n),rep=REPL.slice(-n);
+ const n=UI.chart==='6M'?6:12,sent=chartSent(n),rep=chartRep(n);
  const lastDay=new Date(T0.getFullYear(),T0.getMonth()+1,0),daysLeft=lastDay.getDate()-T0.getDate();
  let workLeft=0;for(let d=new Date(T0);d<=lastDay;d.setDate(d.getDate()+1)){const w=d.getDay();if(w&&w<6)workLeft++}
  const need=Math.max(0,tgt-reached);
  const due=dueList(),tasks=S.tasks.filter(t=>t.date===day(0)),doneN=tasks.filter(t=>t.done).length,totalN=tasks.length+due.length;
  const up=S.events.filter(e=>dd(e.date)>0).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3);
  const lb=S.team.map(m=>({m,c:contactedBy(m.id),t:m.coTarget||20})).sort((a,b)=>b.c-a.c);
- const st=sentStats(mk),rc=pctChange(REPL[11],REPL[10]);
+ const st=sentStats(mk),r0=repN(0),r1=repN(1),rc=pctChange(r0,r1);
  return checkinBanner()+head('Dashboard',[
    kpi('send',st.total,'Emails sent this month',S.gmail.connected?'<span class="badge up">Gmail</span>':'<span class="badge">Gmail not connected</span>'),
-   kpi('reply',REPL[11],'Replies this month',`<span class="badge ${rc>=0?'up':'warn'}">${rc>=0?'+':''}${rc}% vs last month</span>`),
+   kpi('reply',r0,'Replies this month',r1?`<span class="badge ${rc>=0?'up':'warn'}">${rc>=0?'+':''}${rc}% vs last month</span>`:''),
    kpi('target',`${reached} / ${tgt}`,'Companies contacted vs target')])+
  `<div class="row">
   ${card('Outreach',`<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span class="big num" data-count="${sent.reduce((a,b)=>a+b,0)}">${sent.reduce((a,b)=>a+b,0)}</span><span class="sub">emails sent in ${n} months · <b style="color:var(--ink)">${rep.reduce((a,b)=>a+b,0)}</b> replies</span></div>
-    <div class="legend"><span><i style="background:var(--c1)"></i>Emails sent</span><span><i style="background:var(--c2)"></i>Replies</span><span><i class="dash"></i>Reply target · 12 / month</span>${S.gmail.connected?'':'<span class="tag">sample data until Gmail is connected</span>'}</div>
-    <div class="chart" id="ovChart"></div>`,{flex:'2 1 560px',right:seg('chart',[['6M','6M'],['12M','12M']],UI.chart)+arrowBtn('insights','Open Insights')})}
+    <div class="legend"><span><i style="background:var(--c1)"></i>Emails sent</span><span><i style="background:var(--c2)"></i>Replies</span>${S.gmail.connected?'':'<button class="tag" data-act="goto" data-to="workspace" data-tab="gmail" style="cursor:pointer">Connect Gmail to count every email</button>'}</div>
+    <div class="chart" id="ovChart"></div>`,{flex:'2 1 560px',right:seg('chart',[['6M','6M'],['12M','12M']],UI.chart)+arrowBtn('outreach','Open Outreach')})}
   ${card('Hot accounts',`<div class="hotgrid">${hot.map(a=>`<button class="deal" style="--sc:${stageVar(a.stage)}" data-act="open" data-id="${a.id}">
      <span class="meta"><span>${stageLabel(a.stage)} · closes ${fmtD(a.closes)}</span><span class="fit">Fit ${a.fit}</span></span>
      <h4>${esc(a.deal)}</h4><span class="co">${esc(a.name)}</span>
@@ -862,7 +870,7 @@ V.overview=()=>{
  <div class="row">
   ${card('Monthly target · companies',`<div class="gauge">${gauge(pct)}<div class="mid"><div><b class="num">${reached}</b><span class="sub" style="font-size:12px">of ${tgt} companies</span></div></div></div>
     <div class="trio"><div><span>Target</span><b>${tgt}</b></div><div><span>Contacted</span><b>${reached}</b></div><div><span>Days left</span><b>${daysLeft}</b></div></div>
-    <div class="note" style="text-align:center">${need?`Contact <b>${need}</b> more ${need===1?'company':'companies'} · about <b>${workLeft?Math.ceil(need/workLeft):need}</b> a working day`:'<b>Target reached</b> for '+monthName(mk)}</div>`,{flex:'1 1 280px',cls:'target',right:`<button class="btn sm" data-act="editTarget">${ic('edit')}Edit</button>`})}
+    <div class="note" style="text-align:center">${need?(workLeft?`Contact <b>${need}</b> more ${need===1?'company':'companies'} · about <b>${Math.ceil(need/workLeft)}</b> a working day`:`<b>${need}</b> short of the target this month`):'<b>Target reached</b> for '+monthName(mk)}</div>`,{flex:'1 1 280px',cls:'target',right:`<button class="btn sm" data-act="editTarget">${ic('edit')}Edit</button>`})}
   ${card('Stage mix',`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="num" style="font-family:var(--display);font-size:32px;font-weight:600">${act.length}</span><span class="sub">companies in the pipeline</span></div>
     <div class="stackbar">${cnt.filter(c=>c.n).map(c=>`<button data-act="stageFilter" data-k="${c.id}" style="flex:${c.n};background:var(${c.c})" title="${c.label}: ${c.n} · open in Pipeline" aria-label="${c.label}: ${c.n}, open in Pipeline"></button>`).join('')}</div>
     ${cnt.map(c=>`<button class="srow" data-act="stageFilter" data-k="${c.id}" style="grid-template-columns:minmax(0,1fr) 40px 48px;width:100%;text-align:left"><span><i style="background:var(${c.c})"></i>${c.label}</span><span class="num">${c.n}</span><span class="num sub">${act.length?Math.round(c.n/act.length*100):0}%</span></button>`).join('')}`,
@@ -880,7 +888,7 @@ V.overview=()=>{
    {flex:'1 1 320px',right:`<button class="btn sm" data-act="allActivity">See all</button>`})}
  </div>`;
 };
-V.overview.after=()=>{const n=UI.chart==='6M'?6:12;lineChart(document.getElementById('ovChart'),months(n),[{name:'Emails sent',data:chartSent(n),color:'var(--c1)',fill:1},{name:'Replies',data:REPL.slice(-n),color:'var(--c2)'}],12,Math.max(70,Math.ceil(Math.max(...chartSent(n))/10)*10+10))};
+V.overview.after=()=>{const n=UI.chart==='6M'?6:12;lineChart(document.getElementById('ovChart'),months(n),[{name:'Emails sent',data:chartSent(n),color:'var(--c1)',fill:1},{name:'Replies',data:chartRep(n),color:'var(--c2)'}],null,Math.max(10,Math.ceil(Math.max(...chartSent(n),...chartRep(n))*1.25/5)*5))};
 function chartSent(n){if(!S.gmail.connected)return SENT.slice(-n);const out=[];for(let i=n-1;i>=0;i--){const d=new Date(T0.getFullYear(),T0.getMonth()-i,1);out.push(sentStats(MK(d)).total)}return out}
 function checkinBanner(){if(-dd(S.mailCheckAt)<7)return '';return `<div class="banner" role="status">${ic('mail')}<div style="flex:1;min-width:0"><b>Quick check:</b> did you send any outreach emails <b>outside ${S.gmail.connected?'Gmail':'CelSync'}</b> since ${fmtD(S.mailCheckAt)}? ${S.gmail.connected?'Gmail emails are counted automatically.':'Gmail isn’t connected yet, so add them here.'}</div><button class="btn sm pri" data-act="manualMail">Add count</button><button class="btn sm" data-act="checkinNone">None</button></div>`}
 function fuRow(a,d){return `<div class="li"><span class="check" aria-hidden="true" style="border-style:dashed"></span><div class="t"><span class="tag auto">AUTO FOLLOW-UP</span><b style="margin-top:4px">${T()[d.tpl].name} · ${esc(short(a))}</b><span>No reply · last mail ${ago(a.lastMail)}</span></div><button class="btn sm pri" data-act="email" data-id="${a.id}" data-tpl="${d.tpl}">Review</button></div>`}
@@ -908,7 +916,7 @@ V.prospects=()=>{
  `<div class="toolbar"><label class="search">${ic('search')}<input id="prosQ" placeholder="Search name, contact, city" value="${esc(UI.prosQ)}" aria-label="Search prospects"></label>
   ${inds.map(i=>`<button class="chip ${UI.prosInd===i?'on':''}" data-act="prosInd" data-i="${esc(i)}">${esc(i)}</button>`).join('')}
   <span class="sp"></span><button class="btn" data-act="prosSort" title="Change sort">${ic('sort')}${sortLabel}</button>${seg('prosView',[['grid','Grid'],['table','Table']],UI.prosView)}
-  <button class="btn" data-act="exportAll">${ic('download')}Export</button><button class="btn pri" data-act="newProspect">${ic('plus')}New prospect</button></div>
+  <button class="btn pri" data-act="newProspect">${ic('plus')}New prospect</button></div>
  ${list.length?(UI.prosView==='grid'?grid:table):`<div class="card"><p class="empty">No companies match. <button class="lnk" data-act="clearPros">Clear filters</button></p></div>`}`;
 };
 V.prospects.after=()=>{const q=document.getElementById('prosQ');if(q)q.oninput=()=>{UI.prosQ=q.value;rerenderKeep('prosQ')}};
@@ -926,9 +934,9 @@ V.pipeline=()=>{
  :`<div class="tablewrap"><table><thead><tr><th>Company</th><th>Deal</th><th>Stage</th><th>Outreach step</th><th>Fit</th><th>Closes</th><th>Owner</th><th></th></tr></thead><tbody>${S.accounts.filter(f).map(a=>`<tr class="click" data-act="open" data-id="${a.id}" tabindex="0"><td><b style="font-weight:600">${esc(a.name)}</b></td><td>${esc(a.deal)}</td><td>${stageTag(a.stage)}</td><td>${esc(stepLabel(a))}</td><td class="num">${a.fit}</td><td>${fmtD(a.closes)}</td><td><span class="role ${member(a.owner).role}">${member(a.owner).role}</span></td><td><button class="ibtn sm" data-act="dealMenu" data-id="${a.id}" aria-label="More actions">${ic('more')}</button></td></tr>`).join('')}</tbody></table></div>`;
  return head('Deal<br>Pipeline',[kpi('bars',act.length,'Open deals'),kpi('reply',replied,'Replied, waiting on you'),kpi('file',props,'Proposals out'),kpi('cal',meet,'Meetings this week','<span class="badge">next 7 days</span>')])+
  `<div class="toolbar"><label class="search">${ic('search')}<input id="pipeQ" placeholder="Search deals" value="${esc(UI.pipeQ)}" aria-label="Search deals"></label>
-  ${owners.map(([k,l,i])=>`<button class="chip ${UI.pipeOwner===k?'on':''}" data-act="pipeOwner" data-k="${k}" style="padding-left:6px"><span class="av" style="background:${avc(i)};width:24px;height:24px;font-size:9.5px">${esc(i)}</span>${esc(l)}</button>`).join('')}
+  ${S.team.length<2?'':owners.map(([k,l,i])=>`<button class="chip ${UI.pipeOwner===k?'on':''}" data-act="pipeOwner" data-k="${k}" style="padding-left:6px"><span class="av" style="background:${avc(i)};width:24px;height:24px;font-size:9.5px">${esc(i)}</span>${esc(l)}</button>`).join('')}
   <span class="vr"></span><label class="chip" style="padding-right:8px">Product <select id="pipeProd" style="border:0;background:transparent;font-weight:600;outline:0" aria-label="Filter by product"><option value="">All</option>${PRODUCTS.map(p=>`<option ${UI.pipeProd===p?'selected':''}>${p}</option>`).join('')}</select></label>
-  <span class="sp"></span>${seg('pipeView',[['board','Board'],['list','List']],UI.pipeView)}<button class="ibtn" data-act="exportAll" aria-label="Export" title="Export">${ic('download')}</button><button class="btn pri" data-act="newProspect" data-stage="contacted">${ic('plus')}New deal</button></div>
+  <span class="sp"></span>${seg('pipeView',[['board','Board'],['list','List']],UI.pipeView)}<button class="btn pri" data-act="newProspect" data-stage="contacted">${ic('plus')}New deal</button></div>
  ${UI.pipeStage?`<div class="toolbar" style="margin-top:-6px"><span class="chip on">Showing ${stageLabel(UI.pipeStage)} only</span><button class="btn sm" data-act="clearStage">${ic('x')}Show all stages</button></div>`:''}<p class="hint">Drag a card to change its stage, or use ··· on the card.</p>${body}`;
 };
 V.pipeline.after=()=>{
@@ -959,9 +967,9 @@ V.outreach=()=>{
  const sent=S.activity.filter(x=>['mail','send'].includes(x.i));
  let panel='';
  if(UI.outTab==='due')panel=due.map(({a,d})=>{const dr=S.drafts[a.id],m=dr&&dr.tpl===d.tpl?dr:merge(T()[d.tpl],a);return `<div class="draft"><div class="hd">${av(a.name,34)}<b>${esc(a.name)}</b><span class="tag auto">${esc(T()[d.tpl].name.toUpperCase())}</span>${dr?'<span class="tag">edited</span>':''}<span class="sub" style="font-size:12.5px">Last mail ${ago(a.lastMail)} · no reply</span></div>
-   <div class="mail"><span class="to">To: <b style="color:var(--ink);font-weight:500">${esc(a.contact.name||'[Contact]')} · ${esc(short(a))}</b></span><span class="su">${esc(m.subject)}</span><span class="bd">${esc(m.body)}</span></div>
+   <div class="mail"><span class="to">To: <b style="color:var(--ink);font-weight:500">${esc(a.contact.name||'Contact not added yet')} · ${esc(short(a))}</b></span><span class="su">${esc(m.subject)}</span><span class="bd">${esc(m.body)}</span></div>
    <div class="acts"><button class="btn sm" data-act="skip" data-id="${a.id}">Skip</button><button class="btn sm" data-act="email" data-id="${a.id}" data-tpl="${d.tpl}">${ic('edit')}Edit</button><button class="btn sm pri" data-act="email" data-id="${a.id}" data-tpl="${d.tpl}">${ic('send')}Review &amp; send</button></div></div>`}).join('')||'<p class="empty">You’re all caught up. New follow-ups appear here after '+S.settings.wait+' days with no reply.</p>';
- if(UI.outTab==='ready')panel=ready.map(a=>`<div class="li">${av(a.name,36)}<div class="t"><b>${esc(a.name)}</b><span>${a.deck?esc(a.deck)+' ready':'Research done · no deck yet'} · ${esc(a.contact.name||'contact not added')}</span></div><button class="btn sm ${a.deck?'pri':''}" data-act="${a.deck?'email':'makeDeck'}" data-id="${a.id}" data-tpl="${nextTpl(a)}">${a.deck?'Draft intro':'Make deck'}</button></div>`).join('')||'<p class="empty">No companies waiting for a first email.</p>';
+ if(UI.outTab==='ready')panel=ready.map(a=>`<div class="li">${av(a.name,36)}<div class="t"><b>${esc(a.name)}</b><span>${a.deckData?'Deck ready':a.deck?esc(a.deck):'No deck yet'} · ${esc(a.contact.name||'contact not added')}</span></div>${a.deckData||a.deck?'':`<button class="btn sm" data-act="makeDeck" data-id="${a.id}">Make deck</button>`}<button class="btn sm pri" data-act="aiEmail" data-id="${a.id}">Draft intro</button></div>`).join('')||'<p class="empty">No companies waiting for a first email.</p>';
  if(UI.outTab==='sent')panel=mailRows(S.mailLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,25))||'<p class="empty">No emails logged yet. Connect Gmail or send one from CelSync.</p>';
  const seqN=[S.accounts.filter(a=>a.step===3&&a.stage!=='lost'&&a.stage!=='won').length,S.accounts.filter(a=>a.step===4&&a.stage!=='lost'&&a.stage!=='won').length,S.accounts.filter(a=>a.step===5&&a.stage!=='lost'&&a.stage!=='won').length,due.filter(x=>x.d.tpl==='breakup').length];
  const ms=sentStats(curMonth()),unm=S.mailLog.filter(e=>e.src==='gmail'&&!e.acc).length;
@@ -973,7 +981,7 @@ V.outreach=()=>{
  `<div class="row">${card('Drafts waiting for you',`<div class="list">${panel}</div>`,{flex:'1.6 1 520px',extra:`<small>Nothing sends without your OK</small>`,right:seg('outTab',[['due',`Due now · ${due.length}`],['ready',`Ready for first mail · ${ready.length}`],['sent',`Sent · ${sentStats().total}`]],UI.outTab)})}
  ${card('Sequence',[['0','Intro + deck','Personal email with the pitch deck'],[String(S.settings.wait),'Follow-up 1','One concrete idea for their business'],['7','Follow-up 2','Easy out: a one-line reply is enough'],['14','Closing the loop','Polite last email, door left open']].map(([d,n,s],i)=>`<div class="seqi"><div class="dd"><small>Day</small><b>${d}</b></div><div class="t"><b>${n}</b><span>${s}</span></div><span class="tag">${seqN[i]} here</span></div>`).join('')+
   `<div class="rules"><span>${ic(S.settings.stopOnReply?'check':'x')}${S.settings.stopOnReply?'Stops as soon as the company replies':'Keeps going after a reply'}</span><span>${ic(S.settings.weekday?'check':'x')}${S.settings.weekday?'Follow-ups drafted on weekday mornings':'Follow-ups drafted any day'}</span><span>${ic('check')}Wait before follow-up 1: ${S.settings.wait} days</span></div>`,{flex:'1 1 340px',right:`<button class="btn sm" data-act="goto" data-to="workspace" data-tab="rules">Edit rules</button>`})}</div>
- <div class="row">${card('Templates',`<div class="tpls" style="width:100%">${Object.entries(T()).map(([k,t])=>`<div class="tpl"><div style="display:flex;gap:8px;align-items:center"><b style="font-weight:600">${esc(t.name)}</b><span class="tag">${esc(t.when)}</span></div><span class="su">${esc(t.subject)}</span><p>${esc(t.body.replace(/\n+/g,' '))}</p><div class="ft"><span>Sent ${t.sent} · ${t.rate} replies</span><button class="btn sm" data-act="copyTpl" data-k="${k}">${ic('copy')}Copy</button><button class="btn sm" data-act="editTpl" data-k="${k}">Edit</button></div></div>`).join('')}</div>`,{flex:'1 1 100%',extra:`<small>{first}, {company}, {deck} and {idea} fill in for each company</small>`,right:`<button class="btn sm pri" data-act="editTpl">${ic('plus')}New template</button>`})}</div>`;
+ <div class="row">${card('Templates',`<div class="tpls" style="width:100%">${Object.entries(T()).map(([k,t])=>`<div class="tpl"><div style="display:flex;gap:8px;align-items:center"><b style="font-weight:600">${esc(t.name)}</b><span class="tag">${esc(t.when)}</span></div><span class="su">${esc(t.subject)}</span><p>${esc(t.body.replace(/\n+/g,' '))}</p><div class="ft"><span>Used ${tplUse(k)} ${tplUse(k)===1?'time':'times'}</span><button class="btn sm" data-act="copyTpl" data-k="${k}">${ic('copy')}Copy</button><button class="btn sm" data-act="editTpl" data-k="${k}">Edit</button></div></div>`).join('')}</div>`,{flex:'1 1 100%',extra:`<small>{first}, {company}, {deck} and {idea} fill in for each company</small>`,right:`<button class="btn sm pri" data-act="editTpl">${ic('plus')}New template</button>`})}</div>`;
 };
 
 /* ---- Schedule ---- */
@@ -1002,7 +1010,7 @@ V.schedule=()=>{
   calBody=`<div class="week">${days.map(d=>{const s=iso(d),es=ev.filter(e=>e.date===s).sort((a,b)=>a.time.localeCompare(b.time));return `<div class="wday ${s===day(0)?'today':''}"><button class="wh" data-act="dayOpen" data-date="${s}"><small>${d.toLocaleDateString('en-IN',{weekday:'short'})}</small><b>${d.getDate()}</b></button>${es.map(e=>`<button class="wev ${e.type==='followup'?'fu':''}" data-act="${e.type==='followup'?'email':'open'}" data-id="${e.acc}" ${e.tpl?`data-tpl="${e.tpl}"`:''}><i style="background:${TCOL[e.type]}"></i><span><b>${esc(e.title)}</b><small>${e.time}</small></span></button>`).join('')||'<span class="more" style="padding:6px">Free</span>'}</div>`}).join('')}</div>`;
  }
  return head('Outreach<br>Schedule',[kpi('cal',todayItems.length,'Items today'),kpi('mail',fuWeek,'Follow-ups this week'),kpi('clock',overdue.length,'Overdue',overdue.length?'<span class="badge warn">needs action</span>':'')])+
- `<div class="toolbar">${owners.map(([k,l])=>`<button class="chip ${UI.calOwner===k?'on':''}" data-act="calOwner" data-k="${k}">${esc(l)}</button>`).join('')}<span class="vr"></span>
+ `<div class="toolbar">${S.team.length<2?'':owners.map(([k,l])=>`<button class="chip ${UI.calOwner===k?'on':''}" data-act="calOwner" data-k="${k}">${esc(l)}</button>`).join('')}<span class="vr"></span>
   ${Object.keys(TCOL).map(k=>`<button class="chip" data-act="calF" data-k="${k}" aria-pressed="${!!UI.calF[k]}" style="${UI.calF[k]?'':'opacity:.45;text-decoration:line-through'}"><i style="background:${TCOL[k]}"></i>${TLAB[k]}</button>`).join('')}
   <span class="sp"></span><button class="btn pri" data-act="newTask">${ic('plus')}New task</button></div>
  <div class="row">${card(title,calBody,
@@ -1053,7 +1061,7 @@ V.workspace=()=>{
   ${sw('stopOnReply','Stop the sequence when they reply','No more follow-ups once a company answers')}${sw('review','Review every email before it sends','Drafts wait in Outreach for your OK')}${sw('weekday','Draft follow-ups on weekday mornings','Skips Saturday and Sunday')}`;
  if(UI.wsTab==='templates')panel=`<div class="list">${Object.entries(T()).map(([k,t])=>`<div class="li"><span class="mini">${ic('mail')}</span><div class="t"><b>${esc(t.name)}</b><span>${esc(t.subject)}</span></div><span class="tag">${esc(t.when)}</span><button class="btn sm" data-act="editTpl" data-k="${k}">Edit</button>${DEFAULT_TPLS[k]?'':`<button class="ibtn sm" data-act="delTpl" data-k="${k}" aria-label="Delete template" title="Delete">${ic('trash')}</button>`}</div>`).join('')}</div><div class="mf" style="justify-content:flex-start"><button class="btn pri" data-act="editTpl">${ic('plus')}New template</button></div>`;
  if(UI.wsTab==='data')panel=`<div class="list"><div class="li"><span class="mini">${ic('download')}</span><div class="t"><b>Export all companies</b><span>CSV you can paste into Excel, Google Sheets or Notion</span></div><button class="btn sm" data-act="exportAll">Export</button></div>
-  <div class="li"><span class="mini">${ic('trash')}</span><div class="t"><b>Reset demo data</b><span>Clears your changes in this browser and reloads the example companies</span></div><button class="btn sm" data-act="reset">Reset</button></div></div>
+  <div class="li"><span class="mini">${ic('download')}</span><div class="t"><b>Download a backup</b><span>Everything in CelSync is saved in this browser. Keep a backup, or move it to another computer.</span></div><button class="btn sm" data-act="backup">Download</button></div><div class="li"><span class="mini">${ic('file')}</span><div class="t"><b>Restore a backup</b><span>Load a CelSync backup file into this browser</span></div><button class="btn sm" data-act="restore">Restore</button></div></div>
   <div class="note" style="margin-top:12px">This demo saves your changes in this browser only. The real CRM will save to a shared database.</div>`;
  const mine=S.accounts.filter(a=>a.owner==='AS'&&a.stage!=='won'&&a.stage!=='lost').length;
  return head('Workspace<br>Settings',[kpi('users',S.team.length,'Team members'),kpi('clock',st.wait,'Days before follow-up 1'),kpi('mail',Object.keys(T()).length,'Email templates')])+
@@ -1081,7 +1089,6 @@ function openDrawer(id){
   <div class="dsec"><div style="display:flex;align-items:center;gap:8px"><h5 class="cap" style="margin:0">Research brief</h5><span style="flex:1"></span><button class="btn sm" data-act="editBrief" data-id="${a.id}">${ic('edit')}${a.brief?'Edit':'Write'}</button></div><p style="margin:8px 0 0">${esc(a.brief||'No brief yet. Write one, or use the Research module once it’s set up.')}</p></div>
   <div class="dsec"><h5 class="cap">Why Celetel fits</h5><p style="margin:0">${esc(a.why||'—')}</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${a.products.map(p=>`<span class="tag">${esc(p)}</span>`).join('')||'<span class="sub">No products picked yet</span>'}</div></div>
   <div class="dsec"><h5 class="cap">Contact</h5><div class="li" style="border:0;padding:0">${av(a.contact.name||'?',40)}<div class="t"><b>${esc(a.contact.name||'No contact yet')}</b><span>${esc(a.contact.role)}${a.contact.email?' · '+esc(a.contact.email):''}</span></div><button class="btn sm" data-act="editAcc" data-id="${a.id}">Edit</button></div></div>
-  <div class="dsec"><h5 class="cap">Deck</h5><div class="li" style="border:0;padding:0"><span class="mini" style="width:40px;height:40px">${ic('file')}</span><div class="t"><b>${esc(a.deck||'No deck yet')}</b><span>${a.deckUrl?`<a class="lnk" href="${esc(a.deckUrl)}" target="_blank" rel="noopener">Open deck</a>`:(a.deck?'No link saved yet':'Add the deck link before the first email')}</span></div>${a.deckUrl?`<button class="btn sm" data-act="copyDeck" data-id="${a.id}">${ic('copy')}Copy link</button>`:''}<button class="btn sm ${a.deckUrl?'':'pri'}" data-act="makeDeck" data-id="${a.id}" data-reopen="1">${a.deckUrl?'Change':'Add deck link'}</button></div></div>
   <div class="dsec"><h5 class="cap">Emails · ${mailsFor(a.id).reduce((t,e)=>t+(e.src==='manual'?(+e.n||0):1),0)}</h5><div class="list">${mailRows(mailsFor(a.id).slice(0,5))||'<p class="empty">No emails logged for this company yet.</p>'}</div></div>
   <div class="dsec"><h5 class="cap">Outreach steps · ${a.step} of ${STEPS.length}</h5>${STEPS.map((s,i)=>`<button class="stp" data-act="setStep" data-id="${a.id}" data-s="${i<a.step?i:i+1}"><span class="check ${i<a.step?'on':''}">${i<a.step?ic('check'):''}</span>${s}</button>`).join('')}</div>
   <div class="dsec"><h5 class="cap">Add a note</h5><div style="display:flex;gap:8px"><input id="dNote" placeholder="e.g. Prefers WhatsApp over email" aria-label="Note" style="flex:1;min-width:0;background:var(--sunken);border:1px solid var(--line-2);border-radius:12px;padding:10px 12px;outline:0"><button class="btn pri" data-act="addNote" data-id="${a.id}">Add</button></div></div>
@@ -1722,7 +1729,7 @@ Object.assign(A,{
  deckMore:b=>popover(b,`<button class="mi" data-act="open" data-id="${b.dataset.id}">${ic('users')}Open company</button>${acc(b.dataset.id).research?`<button class="mi" data-act="openDoc" data-id="${b.dataset.id}">${ic('file')}Open research</button>`:''}<button class="mi" data-act="quickDeck" data-id="${b.dataset.id}">${ic('spark')}Make a new version</button><button class="mi" data-act="delDeck" data-id="${b.dataset.id}">${ic('trash')}Delete deck</button>`),
  delDeck:b=>{const a=acc(b.dataset.id);closeAll();openModal(`<div class="mh"><div style="flex:1"><h3>Delete this deck?</h3><p>The company stays in CelSync. Only the deck is removed.</p></div>${xBtn()}</div><div class="mf"><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="delDeckOk" data-id="${a.id}">Delete</button></div>`)},
  delDeckOk:b=>{const a=acc(b.dataset.id);delete a.deckData;a.deck='';UI.deckId='';closeAll();render();toast('Deck deleted','trash')},
- aiEmail:b=>{const a=acc(b.dataset.id);compose(a.id,nextTpl(a)||'intro');A.composeAI()},
+ aiEmail:b=>{const a=acc(b.dataset.id);compose(a.id,nextTpl(a)||'intro');if(S.ai.code)A.composeAI()},
  composeAI:async()=>{const a=acc(document.getElementById('cTo').value);if(!a){toast('Choose a company first','x');return}const sb=document.getElementById('cBody'),ss=document.getElementById('cSub'),btn=document.querySelector('[data-act=composeAI]');
   const kind={intro:'intro',partner:'intro (partnership pitch)',fu1:'first follow-up (one concrete idea)',fu2:'second follow-up (short, easy out)',breakup:'last follow-up (closing the loop politely)',meeting:'meeting follow-up'}[document.getElementById('cTpl').value]||'intro';
   if(btn){btn.disabled=true;btn.innerHTML=ic('spark')+'Writing…'}
@@ -1770,6 +1777,64 @@ const _od=openDrawer;openDrawer=function(id){_od(id);const a=acc(id),d=document.
 window.addEventListener('hashchange',()=>{if(!UI.keepSel){UI.docId='';UI.deckId='';UI.docEdit=false;UI.deckEdit=false;UI.thread='';IN.th=null}UI.keepSel=false});
 document.getElementById('nav').addEventListener('click',e=>{const l=e.target.closest('a');if(l&&l.getAttribute('href')===location.hash&&(UI.docId||UI.deckId||UI.thread)){e.preventDefault();UI.docId='';UI.deckId='';UI.docEdit=false;UI.deckEdit=false;UI.thread='';IN.th=null;render();scrollTo({top:0})}});
 /*EXT-END*/
+/*EXT3*/
+/* ---- clean-up: remove example companies, placeholder team and invented numbers ---- */
+const FAKE_IDS=['raftaar','streamnest','kavya','zippy','kesar','urbanfit','medley','playwave'];
+function cleanData(x){if(!x||x.cleanV4)return x;
+ const gone=new Set(x.accounts.filter(a=>FAKE_IDS.includes(a.id)&&/^Example /.test(a.brief||'')).map(a=>a.id));
+ x.accounts=x.accounts.filter(a=>!gone.has(a.id));
+ const ghost=new Set(x.team.filter(m=>/^\[.*\]$/.test(m.name||'')).map(m=>m.id));x.team=x.team.filter(m=>!ghost.has(m.id));
+ x.accounts.forEach(a=>{if(ghost.has(a.owner)||!x.team.some(m=>m.id===a.owner))a.owner='AS'});
+ const keep=o=>!o.acc||!gone.has(o.acc);x.tasks=x.tasks.filter(keep);x.events=x.events.filter(keep);x.activity=x.activity.filter(keep);x.mailLog=(x.mailLog||[]).filter(keep);
+ Object.keys(x.drafts||{}).forEach(k=>{if(gone.has(k))delete x.drafts[k]});
+ x.team.forEach(m=>{m.coBase=0;m.base=0;m.baseDeals=0});
+ Object.values(x.tpls||{}).forEach(t=>{delete t.sent;delete t.rate});
+ x.cleanV4=true;return x}
+cleanData(S);save();
+const _seed=seed;seed=function(){const x=_seed();x.mailLog=[];return cleanData(x)};
+delete V.insights;if(location.hash==='#insights')history.replaceState(null,'','#overview');
+try{localStorage.removeItem('celetel-theme-v2')}catch(e){}document.documentElement.dataset.theme='light';
+
+/* ---- real numbers for the dashboard ---- */
+const monthKey=i=>MK(new Date(T0.getFullYear(),T0.getMonth()-i,1));
+const repN=i=>S.activity.filter(x=>x.i==='reply'&&x.date&&x.date.slice(0,7)===monthKey(i)).length;
+function chartRep(n){const o=[];for(let i=n-1;i>=0;i--)o.push(repN(i));return o}
+chartSent=function(n){const o=[];for(let i=n-1;i>=0;i--)o.push(sentStats(monthKey(i)).total);return o};
+const tplUse=k=>S.mailLog.filter(e=>e.tpl===k).length;
+
+/* ---- deck placeholder in templates ---- */
+const _merge=merge;merge=function(t,a){const m=_merge(t,a);const dk=a.deckUrl||(a.deckData?'attached as a PDF':'');
+ const fix=s=>dk?s.replace(/\[[^\]]*deck[^\]]*link\]/gi,dk):s.split('\n').filter(l=>!/\[[^\]]*deck[^\]]*link\]/i.test(l)).join('\n').replace(/\n{3,}/g,'\n\n');
+ return {subject:fix(m.subject),body:fix(m.body)}};
+
+/* ---- Gmail: guided setup ---- */
+const GSTEPS=[
+ ['project','Create a Google Cloud project','Name it CelSync. Use the Google account you send outreach from.','https://console.cloud.google.com/projectcreate','Open Google Cloud'],
+ ['api','Turn on the Gmail API','Make sure the CelSync project is selected at the top, then press Enable.','https://console.cloud.google.com/apis/library/gmail.googleapis.com','Open Gmail API'],
+ ['brand','Name the app','Google Auth Platform → Branding: app name CelSync, your email as support and developer contact. Press Get started and finish the short form (choose External if asked).','https://console.cloud.google.com/auth/branding','Open Branding'],
+ ['audience','Add yourself as a test user','Audience → Test users → Add users → your Gmail address. Only test users can sign in while the app is in testing.','https://console.cloud.google.com/auth/audience','Open Audience'],
+ ['scopes','Allow reading and sending mail','Data access → Add or remove scopes → tick gmail.modify and gmail.send (search "gmail") → Update → Save.','https://console.cloud.google.com/auth/scopes','Open Data access'],
+ ['client','Create the Client ID','Clients → Create client → Web application. Under Authorised JavaScript origins add the address shown below. Create, then copy the Client ID.','https://console.cloud.google.com/auth/clients/create','Open Clients'],
+ ['connect','Paste the Client ID and connect','Paste it below, press Connect Gmail, pick your account and allow access. Google may say the app is unverified: choose Continue (it is your own app).','','']];
+gmailPanel=function(){const o=location.origin.startsWith('http')?location.origin:'https://celsync.vercel.app';S.gmail.steps=S.gmail.steps||{};const done=k=>!!S.gmail.steps[k]||(k==='connect'&&S.gmail.connected);
+ const next=GSTEPS.findIndex(s=>!done(s[0]));
+ return `<div class="note" style="margin-bottom:16px">${S.gmail.connected?`Connected to <b>${esc(S.gmail.email)}</b>. Last synced ${S.gmail.lastSync?new Date(S.gmail.lastSync).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'never'}.`:`Gmail setup: step ${next<0?GSTEPS.length:next+1} of ${GSTEPS.length}. Tick each step when it's done.`} ${MAIL_SCOPE_NOTE}</div>
+ <div class="gsteps">${GSTEPS.map(([k,t,d,u,l],i)=>`<div class="gs ${done(k)?'done':''} ${i===next?'cur':''}"><button class="gck" data-act="gStep" data-k="${k}" aria-label="Mark step ${i+1} ${done(k)?'not done':'done'}" ${k==='connect'?'disabled':''}>${done(k)?ic('check'):i+1}</button><div class="t"><b>${t}</b><span>${d}</span>
+  ${k==='client'?`<div class="orig"><code>${esc(o)}</code><button class="btn sm" data-act="copyOrigin" data-k="${esc(o)}">${ic('copy')}Copy</button></div>`:''}
+  ${k==='connect'?`<div class="form" style="margin-top:10px"><div class="field full"><label for="gCid">Client ID</label><input id="gCid" value="${esc(S.gmail.clientId||DEFAULT_GOOGLE_CLIENT_ID)}" placeholder="1234567890-abc.apps.googleusercontent.com"></div></div><div class="mf" style="justify-content:flex-start;margin-top:10px">${S.gmail.connected?`<button class="btn pri" data-act="gmailSync">Sync now</button><button class="btn" data-act="unmatched">Link emails to companies</button><button class="btn" data-act="gmailDisconnect">Disconnect</button>`:`<button class="btn pri" data-act="gmailConnect">${ic('mail')}Connect Gmail</button>`}</div>`:''}
+  </div>${u?`<a class="btn sm" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`:''}</div>`).join('')}</div>`};
+Object.assign(A,{
+ gStep:b=>{S.gmail.steps=S.gmail.steps||{};S.gmail.steps[b.dataset.k]=!S.gmail.steps[b.dataset.k];render(true)},
+ copyOrigin:b=>copy(b.dataset.k,'Address copied'),
+ makeDeck:b=>{closeAll();runDeck(b.dataset.id).catch(()=>{})},
+ backup:()=>{download(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),`CelSync_backup_${day(0)}.json`);toast('Backup downloaded','download')},
+ restore:()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{const f=i.files[0];if(!f)return;f.text().then(t=>{let x;try{x=JSON.parse(t)}catch(e){toast('That file isn’t a CelSync backup','x');return}if(!x||!Array.isArray(x.accounts)){toast('That file isn’t a CelSync backup','x');return}
+  openModal(`<div class="mh"><div style="flex:1"><h3>Restore this backup?</h3><p>${x.accounts.length} companies. Everything in CelSync on this browser will be replaced.</p></div>${xBtn()}</div><div class="mf"><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="restoreOk">Restore</button></div>`);A._pending=x})};i.click()},
+ restoreOk:()=>{const x=A._pending;if(!x)return;S=migrate(x)||x;cleanData(S);(function(){S.ai=S.ai||{code:'',autoDeck:true};S.gmail.seenIn=S.gmail.seenIn||[]})();closeAll();render();toast('Backup restored','check')}
+});
+/* tag sends with their template so usage counts are real */
+const _send2=A.send;A.send=async b=>{const tpl=(document.getElementById('cTpl')||{}).value,n=S.mailLog.length;await _send2(b);for(let i=n;i<S.mailLog.length;i++)if(!S.mailLog[i].tpl)S.mailLog[i].tpl=tpl;save()};
+
 
 /* ================= render ================= */
 function current(){const v=location.hash.slice(1);return V[v]?v:'overview'}
@@ -1781,7 +1846,7 @@ function render(keep){
 }
 function rerenderKeep(id){const el=document.getElementById(id),pos=el.selectionStart;render(true);const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}
 window.addEventListener('hashchange',()=>{closeAll();render();scrollTo({top:0})});
-let th='light';try{th=localStorage.getItem('celetel-theme-v2')||'light'}catch(e){}
+let th='light';
 document.documentElement.dataset.theme=th;
 render();
 </script>
