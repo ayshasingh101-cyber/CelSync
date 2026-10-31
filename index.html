@@ -458,10 +458,15 @@ tr.click:hover td{background:var(--hover)}
 .gs{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--surface)}
 .gs .t{flex:1;min-width:0}.gs .t b{display:block;font-weight:600;margin-bottom:3px}.gs .t>span{font-size:13px;color:var(--muted);line-height:1.5}
 .gs.cur{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}.gs.done{opacity:.72}
-.gck{width:30px;height:30px;border-radius:50%;flex:none;border:1.5px solid var(--line-2);background:#fff;font:600 13px var(--font,inherit);color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.gck{width:30px;height:30px;border-radius:50%;flex:none;border:1.5px solid var(--line-2);background:var(--surface);font:600 13px var(--font,inherit);color:var(--ink);cursor:pointer;display:grid;place-items:center}
 .gs.done .gck{background:var(--ok);border-color:var(--ok);color:#fff}.gck svg{width:16px;height:16px}.gck:disabled{cursor:default}
 .orig{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.orig code{background:var(--sunken);padding:4px 8px;border-radius:8px;font-size:12.5px}
 @media (max-width:620px){.gs{flex-wrap:wrap}.gs>a.btn{margin-left:44px}}
+.imp{display:flex;flex-direction:column;max-height:min(60vh,520px);overflow:auto;margin:0 -6px;padding:0 6px}
+.improw{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.improw:last-child{border-bottom:0}
+.improw .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.improw .impN{font-weight:600;padding:7px 10px;border-radius:10px;width:100%;max-width:300px;margin-bottom:2px}
+.improw .meta{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.improw select{flex:none;max-width:200px}
+@media (max-width:620px){.improw{flex-direction:column;align-items:stretch}.improw select{max-width:none}}
 
 .banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:18px;border-radius:18px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);font-size:13.5px}
 .banner svg{color:var(--accent-text)}
@@ -784,7 +789,7 @@ function wonBy(id){const m=member(id),w=S.accounts.filter(a=>a.stage==='won'&&a.
 
 /* ================= shell ================= */
 const NAV=[['overview','Dashboard'],['prospects','Prospects'],['pipeline','Pipeline'],['outreach','Outreach'],['schedule','Schedule']];
-const RAIL=[['search','Search','search'],['plus','Create','create'],['mobile','Log a call','call'],['send','New email','email'],'-',['gear','Settings','settingsGo']];
+const RAIL=[['search','Search','search'],['plus','Create','create'],['cal','Calendar','calendarGo'],['mobile','Log a call','call'],['send','New email','email'],'-',['gear','Settings','settingsGo'],['sun','Theme','theme']];
 document.getElementById('tInbox').innerHTML=ic('inbox');
 document.getElementById('rail').innerHTML=RAIL.map(r=>r==='-'?'<hr>':`<button data-act="${r[2]}" aria-label="${r[1]}">${ic(r[0])}<span class="tip">${r[1]}</span></button>`).join('');
 function chrome(v){
@@ -976,7 +981,7 @@ V.outreach=()=>{
  const mailCard=card('Emails sent',`<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span class="big num">${ms.total}</span><span class="sub">this month · ${ms.linked} linked to companies</span></div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0"><span class="tag">${dot('var(--accent)')}Gmail ${ms.gm}</span><span class="tag">${dot('var(--s-meeting)')}Logged in CelSync ${ms.crm}</span><span class="tag">${dot('var(--s-researched)')}Added manually ${ms.man}</span></div>
   <div class="note">${S.gmail.connected?`Connected to <b>${esc(S.gmail.email||'Gmail')}</b> · last synced ${S.gmail.lastSync?new Date(S.gmail.lastSync).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'never'}`:'Gmail isn’t connected yet. Counts come from emails logged in CelSync and manual entries.'}</div>
-  <div class="mf" style="justify-content:flex-start">${S.gmail.connected?`<button class="btn pri" data-act="gmailSync">${ic('reply')}Sync Gmail now</button>`:`<button class="btn pri" data-act="gmailConnect">${ic('mail')}Connect Gmail</button>`}<button class="btn" data-act="manualMail">${ic('plus')}Add manual count</button><button class="btn" data-act="mailLogView">See all</button>${unm?`<button class="btn" data-act="unmatched">${unm} not linked to a company</button>`:''}</div>`,{flex:'1 1 100%',right:`<small>${monthName(curMonth())}</small>`});
+  <div class="mf" style="justify-content:flex-start">${S.gmail.connected?`<button class="btn pri" data-act="gmailSync">${ic('reply')}Sync Gmail now</button>`:`<button class="btn pri" data-act="gmailConnect">${ic('mail')}Connect Gmail</button>`}<button class="btn" data-act="manualMail">${ic('plus')}Add manual count</button><button class="btn" data-act="mailLogView">See all</button>${unm?`<button class="btn" data-act="unmatched">Add companies from Gmail (${unm})</button>`:''}</div>`,{flex:'1 1 100%',right:`<small>${monthName(curMonth())}</small>`});
  return checkinBanner()+head('Outreach<br>Engine',[kpi('mail',due.length,'Follow-ups due now',due.length?'<span class="badge warn">review</span>':''),kpi('send',inSeq.length,'Companies in a sequence'),kpi('reply',seqReplyRate()+'%','Reply rate on sequences')])+`<div class="row">${mailCard}</div>`+
  `<div class="row">${card('Drafts waiting for you',`<div class="list">${panel}</div>`,{flex:'1.6 1 520px',extra:`<small>Nothing sends without your OK</small>`,right:seg('outTab',[['due',`Due now · ${due.length}`],['ready',`Ready for first mail · ${ready.length}`],['sent',`Sent · ${sentStats().total}`]],UI.outTab)})}
  ${card('Sequence',[['0','Intro + deck','Personal email with the pitch deck'],[String(S.settings.wait),'Follow-up 1','One concrete idea for their business'],['7','Follow-up 2','Easy out: a one-line reply is enough'],['14','Closing the loop','Polite last email, door left open']].map(([d,n,s],i)=>`<div class="seqi"><div class="dd"><small>Day</small><b>${d}</b></div><div class="t"><b>${n}</b><span>${s}</span></div><span class="tag">${seqN[i]} here</span></div>`).join('')+
@@ -1409,7 +1414,7 @@ function startJob(task,name,run,retry){const j={id:'j'+Date.now()+Math.random().
  return run().then(r=>{AI.jobs=AI.jobs.filter(x=>x!==j);paintJobs();return r}).catch(e=>{j.err=e.message;paintJobs();if(e.auth||e.setup){toast(e.message,'x')}else toast(`${task==='research'?'Research':'Deck'} for ${name} failed: ${e.message}`,'x');throw e})}
 
 /* ---------- Company upsert from AI output ---------- */
-function newAccount(name){const a={id:'p'+Date.now(),name,industry:'Other',city:'India',source:'Research',deal:'',value:0,stage:'researched',step:0,closes:day(45),owner:'AS',fit:60,products:[],contact:{first:'',name:'',role:'Contact not added yet',email:''},deck:'',deckUrl:'',lastMail:null,lastTouch:day(0),brief:'',why:'',idea:'',star:false,notes:[],addedAt:day(0),firstMail:null,domain:''};S.accounts.unshift(a);return a}
+function newAccount(name){const a={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,industry:'Other',city:'India',source:'Research',deal:'',value:0,stage:'researched',step:0,closes:day(45),owner:'AS',fit:60,products:[],contact:{first:'',name:'',role:'Contact not added yet',email:''},deck:'',deckUrl:'',lastMail:null,lastTouch:day(0),brief:'',why:'',idea:'',star:false,notes:[],addedAt:day(0),firstMail:null,domain:''};S.accounts.unshift(a);return a}
 function applyCompanyData(a,d){const f=d.crmFields||{};
  if(d.company&&a.name.length<2)a.name=d.company;
  if(d.legal&&!a.legal&&norm(d.legal)!==norm(a.name))a.legal=d.legal;
@@ -1793,7 +1798,6 @@ function cleanData(x){if(!x||x.cleanV4)return x;
 cleanData(S);save();
 const _seed=seed;seed=function(){const x=_seed();x.mailLog=[];return cleanData(x)};
 delete V.insights;if(location.hash==='#insights')history.replaceState(null,'','#overview');
-try{localStorage.removeItem('celetel-theme-v2')}catch(e){}document.documentElement.dataset.theme='light';
 
 /* ---- real numbers for the dashboard ---- */
 const monthKey=i=>MK(new Date(T0.getFullYear(),T0.getMonth()-i,1));
@@ -1811,8 +1815,8 @@ const _merge=merge;merge=function(t,a){const m=_merge(t,a);const dk=a.deckUrl||(
 const GSTEPS=[
  ['project','Create a Google Cloud project','Name it CelSync. Use the Google account you send outreach from.','https://console.cloud.google.com/projectcreate','Open Google Cloud'],
  ['api','Turn on the Gmail API','Make sure the CelSync project is selected at the top, then press Enable.','https://console.cloud.google.com/apis/library/gmail.googleapis.com','Open Gmail API'],
- ['brand','Name the app','Google Auth Platform → Branding: app name CelSync, your email as support and developer contact. Press Get started and finish the short form (choose External if asked).','https://console.cloud.google.com/auth/branding','Open Branding'],
- ['audience','Add yourself as a test user','Audience → Test users → Add users → your Gmail address. Only test users can sign in while the app is in testing.','https://console.cloud.google.com/auth/audience','Open Audience'],
+ ['brand','Name the app','Google Auth Platform → Branding: app name CelSync, your email as support and developer contact. Press Get started and finish the short form. Choose Internal if it’s offered (Celetel accounts only).','https://console.cloud.google.com/auth/branding','Open Branding'],
+ ['audience','Add yourself as a test user','Audience → Test users → Add users → your Gmail address. Skip this step if you chose Internal.','https://console.cloud.google.com/auth/audience','Open Audience'],
  ['scopes','Allow reading and sending mail','Data access → Add or remove scopes → tick gmail.modify and gmail.send (search "gmail") → Update → Save.','https://console.cloud.google.com/auth/scopes','Open Data access'],
  ['client','Create the Client ID','Clients → Create client → Web application. Under Authorised JavaScript origins add the address shown below. Create, then copy the Client ID.','https://console.cloud.google.com/auth/clients/create','Open Clients'],
  ['connect','Paste the Client ID and connect','Paste it below, press Connect Gmail, pick your account and allow access. Google may say the app is unverified: choose Continue (it is your own app).','','']];
@@ -1834,6 +1838,51 @@ Object.assign(A,{
 });
 /* tag sends with their template so usage counts are real */
 const _send2=A.send;A.send=async b=>{const tpl=(document.getElementById('cTpl')||{}).value,n=S.mailLog.length;await _send2(b);for(let i=n;i<S.mailLog.length;i++)if(!S.mailLog[i].tpl)S.mailLog[i].tpl=tpl;save()};
+/*EXT4*/
+/* ---- fresh start: clear all old example and demo information (kept once as a hidden safety copy) ---- */
+function freshStart(x){if(!x||x.freshV5)return x;
+ try{if(x.accounts&&x.accounts.length)localStorage.setItem('celsync-before-fresh-start',JSON.stringify(x))}catch(e){}
+ Object.assign(x,{accounts:[],tasks:[],events:[],activity:[],drafts:{},mailLog:[],targetAdj:{},domainMap:{},seenReplies:0,mailCheckAt:day(0)});
+ x.gmail=Object.assign(x.gmail||{},{seenIn:[],lastSync:null});x.freshV5=true;return x}
+freshStart(S);save();
+const _seed2=seed;seed=function(){return freshStart(_seed2())};
+A.calendarGo=()=>{closeAll();location.hash='schedule'};
+A.theme=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('celetel-theme-v2',r.dataset.theme)}catch(e){};render(true);toast(r.dataset.theme==='dark'?'Dark theme on':'Light theme on','sun')};
+
+/* ---- add companies from Gmail ---- */
+const PERSONAL=/^(gmail|googlemail|yahoo|ymail|outlook|hotmail|live|icloud|me|rediffmail|proton|protonmail|aol|zoho)\./i;
+const SKIP=/(no-?reply|noreply|mailer-daemon|notifications?@|calendar-notification|support@google)/i;
+const selfDom=()=>((S.gmail.email||S.settings.email||'').split('@')[1]||'').toLowerCase();
+function addrList(h){return String(h||'').split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(p=>{const e=(p.match(/[A-Z0-9._%+'-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[''])[0].toLowerCase();const n=(p.replace(/<[^>]*>/,'').replace(/["']/g,'').trim())||'';return{e,n:n&&!n.includes('@')?n:''}}).filter(x=>x.e)}
+function coName(dom){const lab=dom.replace(/^(www|mail|m)\./,'').split('.')[0];return lab.split(/[-_]/).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}
+function gmailGroups(){const me=selfDom(),G={};
+ S.mailLog.filter(e=>e.src==='gmail'&&!e.acc).forEach(e=>{const r=addrList(e.to).find(x=>!x.e.endsWith('@'+me)&&!SKIP.test(x.e));if(!r)return;const dom=r.e.split('@')[1];const personal=PERSONAL.test(dom);const key=personal?r.e:dom;
+  if(S.domainMap[key]==='__ignore')return;const g=G[key]=G[key]||{key,dom,personal,emails:[],contacts:{},first:e.date,last:e.date,subject:''};
+  g.emails.push(e);g.contacts[r.e]=g.contacts[r.e]||r.n;if(e.date<g.first)g.first=e.date;if(e.date>=g.last){g.last=e.date;g.subject=e.subject}});
+ return Object.values(G).sort((a,b)=>b.emails.length-a.emails.length||b.last.localeCompare(a.last))}
+A.unmatched=A.gmailImport=()=>{const L=gmailGroups();if(!L.length){toast(S.gmail.connected?'Every email you sent is linked to a company':'Connect Gmail first (Settings → Gmail)','check');return}
+ openModal(`<div class="mh"><div style="flex:1"><h3>Add companies from Gmail</h3><p>${L.length} ${L.length===1?'company or contact':'companies and contacts'} you emailed in the last 6 months. Choose what each one is, then press Save.</p></div>${xBtn()}</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn sm" data-act="impAll" data-k="new">Add all as new</button><button class="btn sm" data-act="impAll" data-k="">Skip all</button></div>
+ <div class="imp">${L.map((g,i)=>{const c=Object.entries(g.contacts)[0]||['',''];return `<div class="improw"><div class="t"><input class="impN" data-i="${i}" value="${esc(g.personal?(c[1]||c[0].split('@')[0]):coName(g.dom))}" aria-label="Company name"><span class="meta">${esc(c[1]?c[1]+' · ':'')}${esc(c[0])}${Object.keys(g.contacts).length>1?` +${Object.keys(g.contacts).length-1} more`:''}</span><span class="meta">${g.emails.length} email${g.emails.length===1?'':'s'} · last ${fmtD(g.last)} · “${esc((g.subject||'(no subject)').slice(0,60))}”</span></div>
+  <select class="rolesel impS" data-i="${i}" aria-label="What is ${esc(g.key)}"><option value="new" ${g.personal?'':'selected'}>Add as new company</option><option value="" ${g.personal?'selected':''}>Skip for now</option><option value="__ignore">Not outreach (hide)</option>${S.accounts.length?`<optgroup label="Same as">${S.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}</optgroup>`:''}</select></div>`}).join('')}</div>
+ <div class="mf"><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="impSave">Save</button></div>`,true);A._imp=L};
+A.impAll=b=>document.querySelectorAll('.impS').forEach(s=>s.value=b.dataset.k);
+A.impSave=async()=>{const L=A._imp||[];let made=0,linked=0;
+ document.querySelectorAll('.impS').forEach(sel=>{const g=L[+sel.dataset.i],v=sel.value;if(!g||!v)return;
+  if(v==='__ignore'){S.domainMap[g.key]='__ignore';return}
+  let a;if(v==='new'){const nm=(document.querySelector(`.impN[data-i="${sel.dataset.i}"]`).value||'').trim()||coName(g.dom);a=findAcc(nm)||newAccount(nm);a.source='Gmail';a.stage='contacted';made++}else{a=acc(v);linked++}
+  const [ce,cn]=Object.entries(g.contacts)[0];if(!a.contact.email){a.contact.email=ce;if(cn){a.contact.name=cn;a.contact.first=cn.split(' ')[0];a.contact.role='Contact'}}
+  if(!g.personal){a.domain=a.domain||g.dom;S.domainMap[g.dom]=a.id}
+  g.emails.forEach(e=>{e.acc=a.id;applyMailToCompany(e)});a.firstMail=g.first<(a.firstMail||'9')?g.first:a.firstMail;a.lastMail=g.last>(a.lastMail||'')?g.last:a.lastMail;a.lastTouch=a.lastMail;a.step=Math.max(a.step,g.emails.length>=3?5:g.emails.length===2?4:3);
+  if(v==='new')log(`Added from Gmail · ${g.emails.length} email${g.emails.length===1?'':'s'} sent`,a.id,'mail')});
+ closeAll();render(true);toast(made||linked?`${made} compan${made===1?'y':'ies'} added${linked?`, ${linked} linked`:''}. Checking for replies…`:'Saved','check');
+ if(S.gmail.connected&&(made||linked)){S.gmail.seenIn=[];try{const t=await gmailToken();const n=await checkReplies(t);render(true);if(n)toast(`${n} of them replied. Marked as Replied.`,'reply')}catch(e){}}};
+/* after the first Gmail sync with an empty CelSync, offer the import straight away */
+const _gs2=gmailSync;gmailSync=async function(){const first=!S.gmail.lastSync;await _gs2();if(first&&S.gmail.connected&&gmailGroups().length)setTimeout(()=>A.gmailImport(),600)};
+
+/* ---- friendlier empty states ---- */
+const _vp=V.prospects;V.prospects=Object.assign(()=>{const h=_vp();return S.accounts.length?h:h.replace(/<p class="empty">No companies match\.[\s\S]*?<\/p>/,`<p class="empty" style="text-align:center;padding:30px 10px">No companies yet.<br><span style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px">${S.gmail.connected?`<button class="btn pri" data-act="gmailImport">${ic('mail')}Add companies from Gmail</button>`:`<button class="btn pri" data-act="goto" data-to="workspace" data-tab="gmail">${ic('mail')}Connect Gmail</button>`}<button class="btn" data-act="goto" data-to="research">${ic('search')}Research a company</button><button class="btn" data-act="newProspect">${ic('plus')}New prospect</button></span></p>`)},{after:_vp.after});
+const _gp=gmailPanel;gmailPanel=function(){let h=_gp();if(S.gmail.connected){const n=gmailGroups().length;h=h.replace('<button class="btn" data-act="unmatched">Link emails to companies</button>',`<button class="btn" data-act="gmailImport">Add companies from Gmail${n?` (${n})`:''}</button>`)}return h};
 
 
 /* ================= render ================= */
@@ -1846,7 +1895,7 @@ function render(keep){
 }
 function rerenderKeep(id){const el=document.getElementById(id),pos=el.selectionStart;render(true);const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}}
 window.addEventListener('hashchange',()=>{closeAll();render();scrollTo({top:0})});
-let th='light';
+let th='light';try{th=localStorage.getItem('celetel-theme-v2')||'light'}catch(e){}
 document.documentElement.dataset.theme=th;
 render();
 </script>
